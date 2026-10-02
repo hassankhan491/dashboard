@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMarkAllAsRead, useMarkAsRead, useNotifications } from '../hooks/useNotifications';
 import { formatDate } from '../utils/format';
-import type { Notification, NotificationType } from '../types/notification';
+import type { AppNotification, NotificationType } from '../types/notification';
 
 // Map notification types to icons and colors
 const typeConfig: Record<NotificationType, { icon: React.ReactNode; color: string; bg: string }> = {
@@ -25,7 +25,6 @@ export function NotificationsDropdown() {
 
   const unreadCount = notifications?.filter((n) => !n.isRead).length ?? 0;
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -36,13 +35,15 @@ export function NotificationsDropdown() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleNotificationClick = (notif: Notification) => {
+  const handleNotificationClick = (notif: AppNotification) => {
     if (!notif.isRead) {
       markAsRead.mutate(notif.id);
     }
     setIsOpen(false);
     navigate(notif.actionUrl);
   };
+
+  // ... (keep the rest of the JSX exactly the same)
 
   return (
     <div className="relative" ref={dropdownRef}>

@@ -1,12 +1,12 @@
-import type { Notification } from '../types/notification';
+import type { AppNotification } from '../types/notification';
 
-export const mockNotifications: Notification[] = [
+export const mockNotifications: AppNotification[] = [
   {
     id: 'notif-1',
     type: 'approval_required',
     title: 'Refund Approval Required',
-    message: 'Staff member Sara Ali requested a $24.99 refund for Order AMZ-1001 (Damaged item).',
-    targetRole: 'manager',
+    message: 'Staff member requested a $24.99 refund for Order AMZ-1001 (Damaged item).',
+    targetRole: 'Manager',
     isRead: false,
     createdAt: '2026-10-02T14:30:00.000Z',
     actionUrl: '/orders/ord-1001',
@@ -16,8 +16,8 @@ export const mockNotifications: Notification[] = [
     id: 'notif-2',
     type: 'approval_required',
     title: 'Purchase Order Pending Approval',
-    message: 'Danish Malik created a new Purchase Order (PO-1790...) for $100.00. Review and approve to proceed.',
-    targetRole: 'manager',
+    message: 'A new Purchase Order (PO-1790...) for $100.00 needs your review.',
+    targetRole: 'Manager',
     isRead: false,
     createdAt: '2026-10-02T11:00:00.000Z',
     actionUrl: '/purchasing/po-1790952760975',
@@ -28,7 +28,7 @@ export const mockNotifications: Notification[] = [
     type: 'alert',
     title: 'Low Stock Alert: Organic Cotton Towels',
     message: 'SKU EG-ORG-10 has reached 0 available units. Sales may be impacted.',
-    targetRole: 'purchasing',
+    targetRole: 'Manager',
     isRead: false,
     createdAt: '2026-10-01T09:15:00.000Z',
     actionUrl: '/inventory',
@@ -39,7 +39,7 @@ export const mockNotifications: Notification[] = [
     type: 'success',
     title: 'Marketplace Payout Received',
     message: 'Amazon bi-weekly payout of $8,500.00 has been credited to the available balance.',
-    targetRole: 'finance',
+    targetRole: 'Finance',
     isRead: true,
     createdAt: '2026-09-28T10:00:00.000Z',
     actionUrl: '/finance',
@@ -49,8 +49,8 @@ export const mockNotifications: Notification[] = [
     id: 'notif-5',
     type: 'info',
     title: 'New User Added to System',
-    message: 'Super Admin Ayesha Khan added a new staff member: John Doe (Staff).',
-    targetRole: 'admin',
+    message: 'Super Admin added a new staff member to the team.',
+    targetRole: 'Super Admin',
     isRead: true,
     createdAt: '2026-09-25T14:20:00.000Z',
     actionUrl: '/users',
