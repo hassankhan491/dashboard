@@ -51,7 +51,15 @@ export interface ProductInput {
   categoryId: string;
   brandId: string;
   description?: string;
-  variants: ProductVariant[];
+  // Variants can have optional IDs (new variants won't have them yet)
+  variants: Array<{
+    id?: string;
+    name: string;
+    sku: string;
+    costPrice: number;
+    sellingPrice: number;
+    isActive: boolean;
+  }>;
 }
 
 export interface ListingInput {

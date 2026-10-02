@@ -6,9 +6,12 @@ import { ArrowUpDown, Plus, ShieldAlert } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card } from '../components/ui/Card';
+import { ProductFormDialog } from '../features/products/ProductFormDialog';
 import { useAuth } from '../hooks/AuthContext';
+import { useMarketplaceFilter } from '../hooks/MarketplaceFilterContext';
 import { useBrands, useCategories, useListings, useProducts } from '../hooks/useProducts';
 import type { Product } from '../types/product';
+import { MARKETPLACE_FILTER_ALL } from '../types/marketplace';
 
 export function ProductsPage() {
   const { can } = useAuth();
@@ -16,20 +19,48 @@ export function ProductsPage() {
   const { data: categories } = useCategories();
   const { data: brands } = useBrands();
   const { data: listings } = useListings();
+  
+  // Get the global marketplace filter
+  const { filter } = useMarketplaceFilter();
 
   const [sorting, setSorting] = useState<SortingState>([]);
   const [search, setSearch] = useState('');
+  
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
-  // Count active listings per product
+  // 1. Filter listings based on the global marketplace filter
+  const filteredListings = useMemo(() => {
+    if (filter === MARKETPLACE_FILTER_ALL) return listings ?? [];
+    return (listings ?? []).filter((l) => l.marketplaceId === filter);
+  }, [listings, filter]);
+
+  // 2. Count active listings per product (only for the filtered marketplace)
   const activeListingsByProduct = useMemo(() => {
     const map = new Map<string, number>();
-    for (const listing of listings ?? []) {
+    for (const listing of filteredListings) {
       if (listing.status === 'active') {
         map.set(listing.productId, (map.get(listing.productId) ?? 0) + 1);
       }
     }
     return map;
-  }, [listings]);
+  }, [filteredListings]);
+
+  // 3. Determine which products are visible based on the filter
+  const visibleProductIds = useMemo(() => {
+    if (filter === MARKETPLACE_FILTER_ALL) return null; // null means show all
+    const ids = new Set<string>();
+    for (const listing of filteredListings) {
+      ids.add(listing.productId);
+    }
+    return ids;
+  }, [filteredListings, filter]);
+
+  // 4. Filter the products array
+  const filteredProducts = useMemo(() => {
+    if (!visibleProductIds) return products ?? [];
+    return (products ?? []).filter((p) => visibleProductIds.has(p.id));
+  }, [products, visibleProductIds]);
 
   const columns = useMemo<ColumnDef<Product>[]>(
     () => [
@@ -83,7 +114,7 @@ export function ProductsPage() {
   );
 
   const table = useReactTable({
-    data: products ?? [],
+    data: filteredProducts, // Use filtered products here
     columns,
     state: { sorting, globalFilter: search },
     onSortingChange: setSorting,
@@ -123,13 +154,16 @@ export function ProductsPage() {
           />
           {can('products', 'create') && (
             <button
-              // Dialog will be wired in Step 3
+              onClick={() => {
+                setEditingProduct(null);
+                setDialogOpen(true);
+              }}
               className="flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
             >
               <Plus size={16} /> Add Product
             </button>
           )}
-        </div>
+        </div> 
       </div>
 
       <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
@@ -159,7 +193,7 @@ export function ProductsPage() {
               {!isLoading && table.getRowModel().rows.length === 0 && (
                 <tr>
                   <td colSpan={columns.length} className="px-4 py-8 text-center text-muted-foreground">
-                    No products found.
+                    No products found for this marketplace.
                   </td>
                 </tr>
               )}
@@ -176,6 +210,12 @@ export function ProductsPage() {
           </table>
         </div>
       </div>
+
+      <ProductFormDialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        product={editingProduct}
+      />
     </div>
   );
 }

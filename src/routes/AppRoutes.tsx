@@ -12,6 +12,7 @@ import { RolesPage } from '../pages/RolesPage';
 import { UsersPage } from '../pages/UsersPage';
 import { ProtectedRoute } from './ProtectedRoute';
 import { ProductsPage } from '../pages/ProductsPage';
+import { ProductDetailPage } from '../pages/ProductDetailPage';
 
 export function AppRoutes() {
   return (
@@ -28,6 +29,7 @@ export function AppRoutes() {
           <Route path="orders" element={<OrdersPage />} />
           <Route path="orders/:orderId" element={<OrderDetailPage />} />
           <Route path="products" element={<ProductsPage />} />
+          <Route path="products/:productId" element={<ProductDetailPage />} />
           <Route path="purchasing" element={<PlaceholderPage />} />
           <Route path="inventory" element={<PlaceholderPage />} />
           <Route path="finance" element={<PlaceholderPage />} />
