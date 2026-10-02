@@ -15,6 +15,7 @@ import { ProductsPage } from '../pages/ProductsPage';
 import { ProductDetailPage } from '../pages/ProductDetailPage';
 import { ReturnsPage } from '../pages/ReturnsPage';
 import { PurchasingPage } from '../pages/PurchasingPage';
+import { PODetailPage } from '../pages/PODetailPage';
 
 export function AppRoutes() {
   return (
@@ -34,6 +35,7 @@ export function AppRoutes() {
           <Route path="products" element={<ProductsPage />} />
           <Route path="products/:productId" element={<ProductDetailPage />} />
           <Route path="purchasing" element={<PurchasingPage />} />
+          <Route path="purchasing/:poId" element={<PODetailPage />} />
           <Route path="inventory" element={<PlaceholderPage />} />
           <Route path="finance" element={<PlaceholderPage />} />
           <Route path="reports" element={<PlaceholderPage />} />

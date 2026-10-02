@@ -11,6 +11,7 @@ import { usePurchaseOrders, useSuppliers } from '../hooks/usePurchasing';
 import { formatCurrency, formatDate } from '../utils/format';
 import { poStatusStyles } from '../utils/poStatus';
 import type { PurchaseOrder } from '../types/purchasing';
+import { POFormDialog } from '../features/purchasing/POFormDialog';
 
 export function PurchasingPage() {
   const { can } = useAuth();
@@ -172,6 +173,7 @@ export function PurchasingPage() {
           </table>
         </div>
       </div>
+      <POFormDialog open={dialogOpen} onClose={() => setDialogOpen(false)} />
     </div>
   );
 }

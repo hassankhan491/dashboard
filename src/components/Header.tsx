@@ -1,5 +1,5 @@
 import { LogOut, Menu } from 'lucide-react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/AuthContext';
 import { useMarketplaces } from '../hooks/useMarketplaces';
 import { MarketplaceFilterTabs } from './MarketplaceFilterTabs';
@@ -9,6 +9,7 @@ interface Props {
 }
 
 export function Header({ onMenuClick }: Props) {
+  const location = useLocation();
   const { data: marketplaces } = useMarketplaces();
   const { user, logout } = useAuth();
 
@@ -21,14 +22,22 @@ export function Header({ onMenuClick }: Props) {
         .toUpperCase()
     : '';
 
+  // Hide tabs on pages where marketplace filtering doesn't apply
+  const hideTabs = ['/purchasing', '/users', '/roles', '/settings', '/profile'].some((path) =>
+    location.pathname.startsWith(path)
+  );
+
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-card px-4 md:px-6">
       <button className="text-muted-foreground md:hidden" onClick={onMenuClick}>
         <Menu size={20} />
       </button>
+      
       <div className="flex-1">
-        {marketplaces && <MarketplaceFilterTabs marketplaces={marketplaces} />}
+        {/* Only render tabs if we are NOT on an admin/purchasing page */}
+        {!hideTabs && marketplaces && <MarketplaceFilterTabs marketplaces={marketplaces} />}
       </div>
+
       {user && (
         <div className="flex items-center gap-3">
           <NavLink
