@@ -27,6 +27,7 @@ const navItems: NavItem[] = [
   { to: '/users', label: 'Users', icon: UserCog, module: 'users' },
   { to: '/settings', label: 'Settings', icon: Settings, module: 'settings' },
   { to: '/roles', label: 'Roles & Permissions', icon: ShieldCheck, module: 'users' },
+  { to: '/audit', label: 'Audit Logs', icon: ShieldCheck, module: 'settings' },
 ];
 
 interface Props {

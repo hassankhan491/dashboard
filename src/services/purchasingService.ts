@@ -1,5 +1,11 @@
-import { mockPurchaseOrders, mockSuppliers } from '../mock/purchasing';
-import type { POStatus, PurchaseOrder, PurchaseOrderInput, Supplier } from '../types/purchasing';
+import { mockPurchaseOrders, mockSuppliers } from "../mock/purchasing";
+import type {
+  POStatus,
+  PurchaseOrder,
+  PurchaseOrderInput,
+  Supplier,
+} from "../types/purchasing";
+import { inventoryService } from "./inventoryService";
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -24,15 +30,21 @@ export const purchasingService = {
 
   async createPO(input: PurchaseOrderInput): Promise<PurchaseOrder> {
     await delay(300);
-    const totalCost = input.items.reduce((sum, item) => sum + item.quantity * item.unitCost, 0);
+    const totalCost = input.items.reduce(
+      (sum, item) => sum + item.quantity * item.unitCost,
+      0,
+    );
     const po: PurchaseOrder = {
       id: `po-${Date.now()}`,
       supplierId: input.supplierId,
-      status: 'draft',
+      status: "draft",
       expectedDate: input.expectedDate,
       createdAt: new Date().toISOString(),
       notes: input.notes,
-      items: input.items.map((item, idx) => ({ id: `poi-${Date.now()}-${idx}`, ...item })),
+      items: input.items.map((item, idx) => ({
+        id: `poi-${Date.now()}-${idx}`,
+        ...item,
+      })),
       totalCost,
     };
     poDb = [...poDb, po];
@@ -42,7 +54,13 @@ export const purchasingService = {
   async updatePOStatus(id: string, status: POStatus): Promise<PurchaseOrder> {
     await delay(250);
     const existing = poDb.find((po) => po.id === id);
-    if (!existing) throw new Error('PO not found');
+    if (!existing) throw new Error("PO not found"); 
+
+    // THE FIX: Pass the actual PO object to the inventory service
+    if (status === "received" && existing.status !== "received") {
+      await inventoryService.receivePO(existing);
+    }
+
     const updated = { ...existing, status };
     poDb = poDb.map((po) => (po.id === id ? updated : po));
     return { ...updated };

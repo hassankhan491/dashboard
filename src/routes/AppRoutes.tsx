@@ -16,6 +16,10 @@ import { ProductDetailPage } from '../pages/ProductDetailPage';
 import { ReturnsPage } from '../pages/ReturnsPage';
 import { PurchasingPage } from '../pages/PurchasingPage';
 import { PODetailPage } from '../pages/PODetailPage';
+import { InventoryPage } from '../pages/InventoryPage';
+import { FinancePage } from '../pages/FinancePage';
+import { ReportsPage } from '../pages/ReportsPage';
+import { AuditLogsPage } from '../pages/AuditLogsPage';
 
 export function AppRoutes() {
   return (
@@ -36,12 +40,13 @@ export function AppRoutes() {
           <Route path="products/:productId" element={<ProductDetailPage />} />
           <Route path="purchasing" element={<PurchasingPage />} />
           <Route path="purchasing/:poId" element={<PODetailPage />} />
-          <Route path="inventory" element={<PlaceholderPage />} />
-          <Route path="finance" element={<PlaceholderPage />} />
-          <Route path="reports" element={<PlaceholderPage />} />
+          <Route path="inventory" element={<InventoryPage />} />
+          <Route path="finance" element={<FinancePage />} />
+          <Route path="reports" element={<ReportsPage />} />
           <Route path="users" element={<UsersPage />} />
           <Route path="roles" element={<RolesPage />} />
           <Route path="profile" element={<ProfilePage />} />
+          <Route path="audit" element={<AuditLogsPage />} />
           <Route path="settings" element={<PlaceholderPage />} />
           <Route path="*" element={<PlaceholderPage />} />
         </Route>

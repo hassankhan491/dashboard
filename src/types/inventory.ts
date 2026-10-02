@@ -19,8 +19,9 @@ export interface PriceHistoryEvent {
   id: string;
   variantId: string;
   oldCost: number;
-  newCost: number;
+  newCost: number; // The unit cost of the new PO
+  newAverageCost: number; // The calculated WAC after the PO is received
   quantityAdded: number;
-  poId?: string; // Reference to the Purchase Order that caused the change
+  poId?: string;
   recordedAt: string;
 }

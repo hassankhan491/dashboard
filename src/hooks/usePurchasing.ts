@@ -38,6 +38,10 @@ export function useUpdatePOStatus() {
   return useMutation({
     mutationFn: ({ id, status }: { id: string; status: POStatus }) =>
       purchasingService.updatePOStatus(id, status),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ['purchase-orders'] }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['purchase-orders'] });
+      void qc.invalidateQueries({ queryKey: ['inventory'] }); // <--- ADD THIS
+      void qc.invalidateQueries({ queryKey: ['price-history'] }); // <--- ADD THIS
+    },
   });
 }

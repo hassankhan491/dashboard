@@ -3,6 +3,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/AuthContext';
 import { useMarketplaces } from '../hooks/useMarketplaces';
 import { MarketplaceFilterTabs } from './MarketplaceFilterTabs';
+import { NotificationsDropdown } from './NotificationsDropdown';
 
 interface Props {
   onMenuClick: () => void;
@@ -37,6 +38,8 @@ export function Header({ onMenuClick }: Props) {
         {/* Only render tabs if we are NOT on an admin/purchasing page */}
         {!hideTabs && marketplaces && <MarketplaceFilterTabs marketplaces={marketplaces} />}
       </div>
+
+      <NotificationsDropdown />
 
       {user && (
         <div className="flex items-center gap-3">

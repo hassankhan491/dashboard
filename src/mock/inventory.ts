@@ -20,6 +20,7 @@ export const mockPriceHistory: PriceHistoryEvent[] = [
     variantId: 'v-1',
     oldCost: 9.0,
     newCost: 9.5,
+    newAverageCost: 9.2857, // The true Weighted Average!
     quantityAdded: 200,
     poId: 'po-1001',
     recordedAt: '2026-09-15T10:00:00.000Z',

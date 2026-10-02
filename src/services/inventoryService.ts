@@ -1,14 +1,11 @@
 import { mockInventory, mockPriceHistory, mockWarehouses } from '../mock/inventory';
-import { mockPurchaseOrders } from '../mock/purchasing';
 import type { InventoryRecord, PriceHistoryEvent, Warehouse } from '../types/inventory';
-import type { POStatus, PurchaseOrder } from '../types/purchasing';
+import type { PurchaseOrder } from '../types/purchasing';
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 let inventoryDb: InventoryRecord[] = mockInventory.map((i) => ({ ...i }));
 let priceHistoryDb: PriceHistoryEvent[] = mockPriceHistory.map((p) => ({ ...p }));
-// We share the PO DB reference to update its status when received
-let poDb: PurchaseOrder[] = mockPurchaseOrders.map((po) => ({ ...po }));
 
 export const inventoryService = {
   async getWarehouses(): Promise<Warehouse[]> {
@@ -31,14 +28,11 @@ export const inventoryService = {
 
   /** 
    * The core WAC (Weighted Average Cost) logic. 
-   * Triggered when a PO status changes to 'received'.
+   * Now accepts the PO object directly to avoid lookup errors.
    */
-  async receivePO(poId: string): Promise<{ inventory: InventoryRecord[]; priceEvents: PriceHistoryEvent[] }> {
+  async receivePO(po: PurchaseOrder): Promise<{ inventory: InventoryRecord[]; priceEvents: PriceHistoryEvent[] }> {
     await delay(300);
-    const po = poDb.find((p) => p.id === poId);
-    if (!po) throw new Error('PO not found');
-    if (po.status === 'received') throw new Error('PO already received');
-
+    
     const newInventory: InventoryRecord[] = [];
     const newPriceEvents: PriceHistoryEvent[] = [];
 
@@ -73,7 +67,7 @@ export const inventoryService = {
 
       // Update the record
       record.quantity += newQty;
-      record.averageCost = Number(newAvgCost.toFixed(4)); // Round to 4 decimals for accuracy
+      record.averageCost = Number(newAvgCost.toFixed(4)); 
 
       newInventory.push({ ...record });
 
@@ -84,6 +78,7 @@ export const inventoryService = {
           variantId: item.variantId,
           oldCost,
           newCost: newUnitCost,
+          newAverageCost: Number(newAvgCost.toFixed(4)),
           quantityAdded: newQty,
           poId: po.id,
           recordedAt: new Date().toISOString(),
@@ -98,9 +93,6 @@ export const inventoryService = {
       else inventoryDb.push(updated);
     }
     priceHistoryDb = [...priceHistoryDb, ...newPriceEvents];
-    
-    // Update PO status
-    poDb = poDb.map((p) => (p.id === poId ? { ...p, status: 'received' as POStatus } : p));
 
     return { inventory: newInventory, priceEvents: newPriceEvents };
   },
