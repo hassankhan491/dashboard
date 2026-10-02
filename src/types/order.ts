@@ -18,13 +18,24 @@ export interface Shipment {
   deliveredAt?: string;
 }
 
+export type ReturnStatus = 'requested' | 'approved' | 'received' | 'refunded' | 'rejected';
+
+export interface ReturnStatusEvent {
+  id: string;
+  status: ReturnStatus;
+  changedBy: string;
+  changedAt: string;
+  note?: string;
+}
+
 export interface ReturnRecord {
   id: string;
   reason: string;
-  status: 'requested' | 'approved' | 'received' | 'refunded' | 'rejected';
+  status: ReturnStatus;
   refundAmount: number;
   requestedAt: string;
   note?: string;
+  statusHistory: ReturnStatusEvent[];
 }
 
 export interface OrderStatusEvent {

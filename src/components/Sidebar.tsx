@@ -1,5 +1,5 @@
 import {
-  BarChart3, LayoutDashboard, Package, Settings, ShieldCheck, ShoppingCart,
+  BarChart3, LayoutDashboard, Package, PackageMinus, Settings, ShieldCheck, ShoppingCart,
   Truck, UserCog, Users, Wallet, Warehouse, X, type LucideIcon,
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
@@ -18,6 +18,7 @@ const navItems: NavItem[] = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, module: 'dashboard', end: true },
   { to: '/clients', label: 'Clients', icon: Users, module: 'clients' },
   { to: '/orders', label: 'Orders', icon: ShoppingCart, module: 'orders' },
+  { to: '/returns', label: 'Returns & Refunds', icon: PackageMinus, module: 'orders' },
   { to: '/products', label: 'Products', icon: Package, module: 'products' },
   { to: '/purchasing', label: 'Purchasing', icon: Truck, module: 'purchasing' },
   { to: '/inventory', label: 'Inventory', icon: Warehouse, module: 'inventory' },

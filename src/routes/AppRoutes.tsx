@@ -13,6 +13,8 @@ import { UsersPage } from '../pages/UsersPage';
 import { ProtectedRoute } from './ProtectedRoute';
 import { ProductsPage } from '../pages/ProductsPage';
 import { ProductDetailPage } from '../pages/ProductDetailPage';
+import { ReturnsPage } from '../pages/ReturnsPage';
+import { PurchasingPage } from '../pages/PurchasingPage';
 
 export function AppRoutes() {
   return (
@@ -28,9 +30,10 @@ export function AppRoutes() {
           <Route path="clients/:clientId" element={<ClientDetailPage />} />
           <Route path="orders" element={<OrdersPage />} />
           <Route path="orders/:orderId" element={<OrderDetailPage />} />
+          <Route path="returns" element={<ReturnsPage />} />
           <Route path="products" element={<ProductsPage />} />
           <Route path="products/:productId" element={<ProductDetailPage />} />
-          <Route path="purchasing" element={<PlaceholderPage />} />
+          <Route path="purchasing" element={<PurchasingPage />} />
           <Route path="inventory" element={<PlaceholderPage />} />
           <Route path="finance" element={<PlaceholderPage />} />
           <Route path="reports" element={<PlaceholderPage />} />

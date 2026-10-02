@@ -1,12 +1,10 @@
-import { PackageMinus, Plus } from 'lucide-react';
-import { useState } from 'react';
+import { PackageMinus } from 'lucide-react';
 import { useAuth } from '../../hooks/AuthContext';
 import { useUpdateReturnStatus } from '../../hooks/useOrders';
 import type { Order } from '../../types/order';
 import { formatCurrency, formatDate } from '../../utils/format';
 import { nextReturnStatuses, returnStatusStyles } from '../../utils/returnStatus';
 import { Card } from '../../components/ui/Card';
-import { ReturnFormDialog } from './ReturnFormDialog';
 
 interface Props {
   order: Order;
@@ -15,9 +13,7 @@ interface Props {
 export function OrderReturnsCard({ order }: Props) {
   const { can } = useAuth();
   const updateReturnStatus = useUpdateReturnStatus();
-  const [dialogOpen, setDialogOpen] = useState(false);
 
-  const canEdit = can('orders', 'edit');
   const canApprove = can('orders', 'approve');
 
   return (
@@ -26,14 +22,6 @@ export function OrderReturnsCard({ order }: Props) {
         <h2 className="flex items-center gap-2 font-semibold">
           <PackageMinus size={16} className="text-muted-foreground" /> Returns & refunds
         </h2>
-        {canEdit && (
-          <button
-            onClick={() => setDialogOpen(true)}
-            className="flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-accent"
-          >
-            <Plus size={14} /> Request Return
-          </button>
-        )}
       </div>
 
       {order.returns.length === 0 ? (
@@ -87,8 +75,6 @@ export function OrderReturnsCard({ order }: Props) {
           })}
         </div>
       )}
-
-      <ReturnFormDialog open={dialogOpen} onClose={() => setDialogOpen(false)} order={order} />
     </Card>
   );
 }
