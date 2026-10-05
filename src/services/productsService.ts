@@ -43,7 +43,16 @@ export const productsService = {
 
   async create(input: ProductInput): Promise<Product> {
     await delay(300);
-    const product: Product = { ...input, id: `p-${Date.now()}`, createdAt: new Date().toISOString() };
+    // FIX: Map variants to ensure every variant has a valid string ID
+    const product: Product = { 
+      ...input, 
+      id: `p-${Date.now()}`, 
+      createdAt: new Date().toISOString(),
+      variants: input.variants.map((v) => ({
+        ...v,
+        id: v.id || `v-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      })),
+    };
     productsDb = [...productsDb, product];
     return { ...product };
   },
@@ -52,7 +61,17 @@ export const productsService = {
     await delay(300);
     const existing = productsDb.find((p) => p.id === id);
     if (!existing) throw new Error('Product not found');
-    const updated: Product = { ...input, id: existing.id, createdAt: existing.createdAt };
+    
+    // FIX: Map variants to ensure every variant has a valid string ID
+    const updated: Product = { 
+      ...input, 
+      id: existing.id, 
+      createdAt: existing.createdAt,
+      variants: input.variants.map((v) => ({
+        ...v,
+        id: v.id || `v-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      })),
+    };
     productsDb = productsDb.map((p) => (p.id === id ? updated : p));
     return { ...updated };
   },

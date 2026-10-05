@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ordersService, type ReturnInput } from '../services/ordersService';
-import { MARKETPLACE_FILTER_ALL, type MarketplaceFilter } from '../types/marketplace';
+import { MARKETPLACE_FILTER_ALL } from '../types/marketplace';
 import type { OrderStatus, ReturnRecord } from '../types/order';
 import { useAuth } from './AuthContext';
 import { useMarketplaceFilter } from './MarketplaceFilterContext';

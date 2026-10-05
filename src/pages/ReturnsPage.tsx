@@ -11,7 +11,7 @@ import { flattenReturns, getMonthlyAuditRows } from '../utils/returnsAudit';
 
 export function ReturnsPage() {
   const { can } = useAuth();
-  const { data: orders, isLoading } = useOrders();
+  const { data: orders, } = useOrders();
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const flattened = flattenReturns(orders ?? []);

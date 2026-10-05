@@ -68,13 +68,21 @@ export const ordersService = {
     const existing = db.find((order) => order.id === id);
     if (!existing) throw new Error('Order not found');
     const ret: ReturnRecord = {
-      id: `ret-${Date.now()}`,
-      reason: input.reason,
+  id: `ret-${Date.now()}`,
+  reason: input.reason,
+  status: 'requested',
+  refundAmount: input.refundAmount,
+  requestedAt: new Date().toISOString(),
+  note: input.note,
+  statusHistory: [
+    {
+      id: `rse-${Date.now()}`,
       status: 'requested',
-      refundAmount: input.refundAmount,
-      requestedAt: new Date().toISOString(),
-      note: input.note,
-    };
+      changedBy: 'System', // In real app, get from auth context
+      changedAt: new Date().toISOString(),
+    },
+  ],
+};
     const updated: Order = { ...existing, returns: [...existing.returns, ret] };
     db = db.map((order) => (order.id === id ? updated : order));
     return { ...updated };

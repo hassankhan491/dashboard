@@ -6,7 +6,7 @@ import { Dialog } from '../../components/ui/Dialog';
 import { useClients } from '../../hooks/useClients';
 import { useCreateListing } from '../../hooks/useProducts';
 import { useMarketplaces } from '../../hooks/useMarketplaces';
-import type { MarketplaceListing, ProductVariant } from '../../types/product';
+import type { ProductVariant } from '../../types/product';
 
 const listingSchema = z.object({
   clientId: z.string().min(1, 'Client is required'),

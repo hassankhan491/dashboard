@@ -2,7 +2,7 @@ import { DollarSign, Store, TrendingUp, Wallet } from 'lucide-react';
 import { useClientPerformanceByClient } from '../../hooks/useClients';
 import { useMarketplaces } from '../../hooks/useMarketplaces';
 import type { Client, MarketplaceAccountStatus } from '../../types/client';
-import { clientStatusStyles } from '../../utils/clientStatus';
+// import { clientStatusStyles } from '../../utils/clientStatus';
 import { formatCurrency } from '../../utils/format';
 import { Card } from '../../components/ui/Card';
 import { StatCard } from '../../components/ui/StatCard';
