@@ -4,6 +4,7 @@ import {
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../hooks/AuthContext';
+import { useAgencyName } from '../hooks/useAgencyName';
 import type { ModuleKey } from '../types/auth';
 
 interface NavItem {
@@ -37,6 +38,7 @@ interface Props {
 
 export function Sidebar({ open, onClose }: Props) {
   const { can } = useAuth();
+  const agencyName = useAgencyName(); // Hook to listen for name changes
   const visibleItems = navItems.filter((item) => can(item.module, 'view'));
 
   return (
@@ -51,7 +53,10 @@ export function Sidebar({ open, onClose }: Props) {
         }
       >
         <div className="flex h-16 items-center justify-between border-b px-6">
-          <span className="text-lg font-bold">Shariq Enterprises</span>
+          {/* Use the agencyName variable here instead of localStorage */}
+          <span className="text-lg font-bold">
+            {agencyName}
+          </span>
           <button className="text-muted-foreground md:hidden" onClick={onClose}>
             <X size={20} />
           </button>

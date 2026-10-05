@@ -20,6 +20,7 @@ import { InventoryPage } from '../pages/InventoryPage';
 import { FinancePage } from '../pages/FinancePage';
 import { ReportsPage } from '../pages/ReportsPage';
 import { AuditLogsPage } from '../pages/AuditLogsPage';
+import { SettingsPage } from '../pages/SettingsPage';
 
 export function AppRoutes() {
   return (
@@ -47,7 +48,7 @@ export function AppRoutes() {
           <Route path="roles" element={<RolesPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="audit" element={<AuditLogsPage />} />
-          <Route path="settings" element={<PlaceholderPage />} />
+          <Route path="settings" element={<SettingsPage />} />
           <Route path="*" element={<PlaceholderPage />} />
         </Route>
       </Route>
