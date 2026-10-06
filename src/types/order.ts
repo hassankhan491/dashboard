@@ -18,7 +18,7 @@ export interface Shipment {
   deliveredAt?: string;
 }
 
-export type ReturnStatus = 'requested' | 'approved' | 'received' | 'refunded' | 'rejected';
+export type ReturnStatus = 'requested' | 'approved' | 'in_transit' | 'received' | 'closed' | 'refunded' | 'rejected';
 
 export interface ReturnStatusEvent {
   id: string;

@@ -1,7 +1,12 @@
 import { mockOrders } from "../mock/orders";
-import type { Order, OrderStatus, ReturnRecord } from "../types/order";
 import { mockReturnAddresses } from "../mock/returnAddresses";
-import type { ReturnAddress } from "../types/order";
+import type {
+  Order,
+  OrderStatus,
+  ReturnAddress,
+  ReturnReceipt,
+  ReturnRecord,
+} from "../types/order";
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -121,5 +126,102 @@ export const ordersService = {
     };
     db = db.map((order) => (order.id === id ? updated : order));
     return { ...updated };
+  },
+
+  
+
+
+      async receiveReturn(
+    returnId: string,
+    receipt: Omit<ReturnReceipt, "id">,
+  ): Promise<void> {
+    await delay(250);
+    let found = false;
+    db = db.map((order) => {
+      const returnIdx = order.returns.findIndex((r) => r.id === returnId);
+      if (returnIdx === -1) return order;
+
+      found = true;
+      const ret = order.returns[returnIdx];
+      const newReceipt: ReturnReceipt = { ...receipt, id: `rcpt-${Date.now()}` };
+      const updatedReceipts = [...(ret.receipts || []), newReceipt];
+
+      const expected = ret.expectedQty ?? 1;
+      const totalReceived = updatedReceipts.reduce(
+        (sum, r) => sum + r.receivedQty,
+        0,
+      );
+
+      let newStatus = ret.status;
+      if (totalReceived >= expected) newStatus = "received";
+      else if (ret.status === "approved") newStatus = "in_transit";
+
+      const updatedReturns = order.returns.map((r, idx) =>
+        idx === returnIdx
+          ? {
+              ...r,
+              receipts: updatedReceipts,
+              status: newStatus,
+              statusHistory: [
+                ...r.statusHistory,
+                {
+                  id: `rse-${Date.now()}`,
+                  status: newStatus,
+                  changedBy: receipt.receivedBy,
+                  changedAt: receipt.receivedAt,
+                },
+              ],
+            }
+          : r,
+      );
+      return { ...order, returns: updatedReturns };
+    });
+
+    if (!found) throw new Error("Return not found");
+  },
+
+
+
+
+
+
+
+
+
+    /** ORD-05 / ORD-06: Financial exposure of refunds split by shipment state */
+  async getRefundExposure(): Promise<{
+    refundedShipped: number;
+    refundedNotShipped: number;
+    refundedShippedCount: number;
+    refundedNotShippedCount: number;
+  }> {
+    await delay(150);
+    let shipped = 0;
+    let notShipped = 0;
+    let shippedCount = 0;
+    let notShippedCount = 0;
+
+    for (const order of db) {
+      const isShipped =
+        Boolean(order.shipment) || order.status === 'shipped' || order.status === 'delivered';
+      for (const ret of order.returns) {
+        if (ret.status === 'refunded' || ret.status === 'closed') {
+          if (isShipped) {
+            shipped += ret.refundAmount;
+            shippedCount += 1;
+          } else {
+            notShipped += ret.refundAmount;
+            notShippedCount += 1;
+          }
+        }
+      }
+    }
+
+        return {
+      refundedShipped: shipped,
+      refundedNotShipped: notShipped,
+      refundedShippedCount: shippedCount,
+      refundedNotShippedCount: notShippedCount,
+    };
   },
 };

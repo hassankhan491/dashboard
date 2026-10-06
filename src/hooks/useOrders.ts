@@ -68,3 +68,31 @@ export function useUpdateReturnStatus() {
     },
   });
 }
+
+
+
+export function useReturnAddresses() {
+  return useQuery({
+    queryKey: ['return-addresses'],
+    queryFn: () => ordersService.getReturnAddresses(),
+    staleTime: Number.POSITIVE_INFINITY,
+  });
+}
+
+export function useReceiveReturn() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ returnId, receipt }: { returnId: string; receipt: Omit<import('../types/order').ReturnReceipt, 'id'> }) =>
+      ordersService.receiveReturn(returnId, receipt),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['orders'] });
+    },
+  });
+}
+
+export function useRefundExposure() {
+  return useQuery({
+    queryKey: ['orders', 'refund-exposure'],
+    queryFn: () => ordersService.getRefundExposure(),
+  });
+}

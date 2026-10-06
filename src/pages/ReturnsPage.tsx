@@ -1,144 +1,330 @@
-import { Plus } from 'lucide-react';
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Card } from '../components/ui/Card';
-import { ReturnFormDialog } from '../features/orders/ReturnFormDialog';
-import { useAuth } from '../hooks/AuthContext';
-import { useOrders } from '../hooks/useOrders';
-import { formatCurrency, formatDate } from '../utils/format';
-import { returnStatusStyles } from '../utils/returnStatus';
-import { flattenReturns, getMonthlyAuditRows } from '../utils/returnsAudit';
+import {
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  useReactTable,
+  type ColumnDef,
+} from "@tanstack/react-table";
+import { AlertTriangle, PackageCheck, ShieldAlert } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Card } from "../components/ui/Card";
+import { useAuth } from "../hooks/AuthContext";
+import { useOrders, useUpdateReturnStatus } from "../hooks/useOrders";
+import { formatCurrency } from "../utils/format";
+import type { ReturnRecord, ReturnStatus } from "../types/order";
+import { ReturnReceivingDialog } from "../features/orders/ReturnReceivingDialog";
+import { RefundExposureCards } from "../features/orders/RefundExposureCards";
+
+const statusStyles: Record<ReturnStatus, string> = {
+  requested: "bg-blue-100 text-blue-700",
+  approved: "bg-amber-100 text-amber-700",
+  in_transit: "bg-purple-100 text-purple-700",
+  received: "bg-green-100 text-green-700",
+  closed: "bg-gray-100 text-gray-700",
+  refunded: "bg-indigo-100 text-indigo-700",
+  rejected: "bg-red-100 text-red-700",
+};
+
+const formatStatus = (s: string) =>
+  s
+    .split("_")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+
+interface FlatReturn extends ReturnRecord {
+  orderId: string;
+  orderNumber: string;
+  customerName: string;
+  isOverdue: boolean;
+}
 
 export function ReturnsPage() {
   const { can } = useAuth();
-  const { data: orders, } = useOrders();
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const { data: orders } = useOrders();
+  const updateReturnStatus = useUpdateReturnStatus();
+  const [search, setSearch] = useState("");
+  const [receivingReturn, setReceivingReturn] = useState<{
+    ret: ReturnRecord;
+    orderNumber: string;
+  } | null>(null);
 
-  const flattened = flattenReturns(orders ?? []);
-  const monthlyRows = getMonthlyAuditRows(flattened);
+  const flatReturns = useMemo<FlatReturn[]>(() => {
+    if (!orders) return [];
+    const now = new Date().getTime();
+    const fourteenDays = 14 * 24 * 60 * 60 * 1000;
 
-  if (!can('orders', 'view')) {
+    return orders.flatMap((order) =>
+      order.returns.map((ret) => {
+        const approvedEvent = ret.statusHistory.find(
+          (h) => h.status === "approved",
+        );
+        const approvedAt = approvedEvent
+          ? new Date(approvedEvent.changedAt).getTime()
+          : 0;
+        const receivedQty =
+          ret.receipts?.reduce((sum, r) => sum + r.receivedQty, 0) ?? 0;
+        const isOverdue =
+          ret.status === "approved" &&
+          receivedQty === 0 &&
+          now - approvedAt > fourteenDays;
+
+        return {
+          ...ret,
+          orderId: order.id,
+          orderNumber: order.orderNumber,
+          customerName: order.customerName,
+          isOverdue,
+        };
+      }),
+    );
+  }, [orders]);
+
+  const columns = useMemo<ColumnDef<FlatReturn>[]>(
+    () => [
+      {
+        id: "order",
+        header: "Order",
+        cell: ({ row }) => (
+          <span className="font-medium">{row.original.orderNumber}</span>
+        ),
+      },
+      {
+        id: "customer",
+        header: "Customer",
+        cell: ({ row }) => row.original.customerName,
+      },
+      {
+        id: "reason",
+        header: "Reason",
+        cell: ({ row }) => (
+          <span className="text-muted-foreground">{row.original.reason}</span>
+        ),
+      },
+      {
+        id: "status",
+        header: "Status",
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2">
+            <span
+              className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusStyles[row.original.status]}`}
+            >
+              {formatStatus(row.original.status)}
+            </span>
+            {row.original.isOverdue && (
+              <span
+                className="flex items-center gap-1 text-xs font-semibold text-red-600"
+                title="Overdue for receipt (>14 days)"
+              >
+                <AlertTriangle size={12} /> Overdue
+              </span>
+            )}
+          </div>
+        ),
+      },
+      {
+        id: "qty",
+        header: () => <span className="block text-left">Expected / Received</span>,
+        cell: ({ row }) => {
+          const expected = row.original.expectedQty ?? 1;
+          const received =
+            row.original.receipts?.reduce((s, r) => s + r.receivedQty, 0) ?? 0;
+          return (
+            <span className="block text-left font-mono text-xs">
+              {received} / {expected}
+            </span>
+          );
+        },
+      },
+      {
+        id: "refund",
+        header: () => <span className="block text-left">Refund Amt</span>,
+        cell: ({ row }) => (
+          <span className="block text-left">
+            {formatCurrency(row.original.refundAmount)}
+          </span>
+        ),
+      },
+      {
+        id: "actions",
+        header: "",
+        cell: ({ row }) => {
+          const ret = row.original;
+          const expected = ret.expectedQty ?? 1;
+          const received =
+            ret.receipts?.reduce((s, r) => s + r.receivedQty, 0) ?? 0;
+          if (!can("orders", "edit")) return null;
+
+          // Requested → Approve / Reject
+          if (ret.status === "requested") {
+            return (
+              <div className="flex gap-1">
+                <button
+                  onClick={() =>
+                    updateReturnStatus.mutate({
+                         id: ret.orderId,
+                      returnId: ret.id,
+                      status: "approved",
+                    })
+                  }
+                  className="rounded-md border border-green-600 px-2 py-1 text-xs font-semibold text-green-700 hover:bg-green-50"
+                >
+                  Approve
+                </button>
+                <button
+                  onClick={() =>
+                    updateReturnStatus.mutate({
+                         id: ret.orderId,
+                      returnId: ret.id,
+                      status: "rejected",
+                    })
+                  }
+                  className="rounded-md border border-red-600 px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-50"
+                >
+                  Reject
+                </button>
+              </div>
+            );
+          }
+
+          // Approved / In Transit → Receive (physical receiving)
+          if (
+            (ret.status === "approved" || ret.status === "in_transit") &&
+            received < expected
+          ) {
+            return (
+              <button
+                onClick={() =>
+                  setReceivingReturn({
+                    ret,
+                    orderNumber: ret.orderNumber,
+                  })
+                }
+                className="flex items-center gap-1 rounded-md bg-green-600 px-2 py-1 text-xs font-semibold text-white hover:opacity-90"
+              >
+                <PackageCheck size={12} /> Receive
+              </button>
+            );
+          }
+
+          // Received → Close & Refund (final financial step)
+          if (ret.status === "received") {
+            return (
+              <button
+                onClick={() =>
+                  updateReturnStatus.mutate({
+                       id: ret.orderId,
+                    returnId: ret.id,
+                    status: "closed",
+                  })
+                }
+                className="rounded-md border border-indigo-600 px-2 py-1 text-xs font-semibold text-indigo-700 hover:bg-indigo-50"
+              >
+                Close & Refund
+              </button>
+            );
+          }
+
+          return null;
+        },
+      },
+    ],
+    [can, updateReturnStatus],
+  );
+
+  const table = useReactTable({
+    data: flatReturns,
+    columns,
+    state: { globalFilter: search },
+    onGlobalFilterChange: setSearch,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+  });
+
+  if (!can("orders", "view")) {
     return (
       <Card className="flex flex-col items-center p-12 text-center">
+        <ShieldAlert size={40} />
         <h1 className="mt-4 text-xl font-bold">No permission</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Your role does not allow viewing returns.</p>
       </Card>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Returns & Refunds Audit</h1>
+          <h1 className="text-2xl font-bold">Returns & Receiving</h1>
           <p className="text-sm text-muted-foreground">
-            All returns are financially attributed to the month of the original sale.
+            Track return lifecycles and physical warehouse receiving.
           </p>
         </div>
-        {can('orders', 'edit') && (
-          <button
-            onClick={() => setDialogOpen(true)}
-            className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
-          >
-            <Plus size={16} /> Request Return
-          </button>
-        )}
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search orders or reasons…"
+          className="rounded-md border bg-background px-3 py-2 text-sm"
+        />
       </div>
 
-      {/* Monthly Audit Table */}
-      <Card>
-        <h2 className="mb-4 font-semibold">Monthly Audit (Attributed by Order Date)</h2>
+      {/* ORD-05 / ORD-06: Financial Exposure KPIs */}
+      <RefundExposureCards />
+
+      <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b text-left text-muted-foreground">
-                <th className="py-2 pr-4 font-medium">Month of Sale</th>
-                <th className="py-2 pr-4 text-right font-medium">Total Returns</th>
-                <th className="py-2 pr-4 text-right font-medium">Total Refund Amount</th>
-                <th className="py-2 pr-4 text-right font-medium">Pending Approval/Processing</th>
-                <th className="py-2 text-right font-medium">Fully Refunded</th>
-              </tr>
+              {table.getHeaderGroups().map((hg) => (
+                <tr
+                  key={hg.id}
+                  className="border-b text-left text-muted-foreground"
+                >
+                  {hg.headers.map((h) => (
+                    <th key={h.id} className="px-4 py-3 font-medium">
+                      {flexRender(h.column.columnDef.header, h.getContext())}
+                    </th>
+                  ))}
+                </tr>
+              ))}
             </thead>
             <tbody className="divide-y">
-              {monthlyRows.length === 0 && (
+              {table.getRowModel().rows.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
-                    No returns found for the selected filters.
+                  <td
+                    colSpan={columns.length}
+                    className="px-4 py-8 text-center text-muted-foreground"
+                  >
+                    No returns found.
                   </td>
                 </tr>
               )}
-              {monthlyRows.map((row) => (
-                <tr key={row.monthKey} className="hover:bg-muted/50">
-                  <td className="py-3 pr-4 font-medium">{row.month}</td>
-                  <td className="py-3 pr-4 text-right">{row.totalCount}</td>
-                  <td className="py-3 pr-4 text-right font-semibold">{formatCurrency(row.totalRefundAmount)}</td>
-                  <td className="py-3 pr-4 text-right text-amber-600">{row.pendingCount}</td>
-                  <td className="py-3 text-right text-green-600">{row.refundedCount}</td>
+              {table.getRowModel().rows.map((row) => (
+                <tr
+                  key={row.id}
+                  className={`hover:bg-muted/50 ${row.original.isOverdue ? "bg-red-50/50" : ""}`}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <td key={cell.id} className="px-4 py-3">
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
+                    </td>
+                  ))}
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </Card>
+      </div>
 
-      {/* Detailed Returns List */}
-      <Card>
-        <h2 className="mb-4 font-semibold">All Returns</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b text-left text-muted-foreground">
-                <th className="py-2 pr-4 font-medium">Order</th>
-                <th className="py-2 pr-4 font-medium">Order Date</th>
-                <th className="py-2 pr-4 font-medium">Return Reason</th>
-                <th className="py-2 pr-4 font-medium">Requested</th>
-                <th className="py-2 pr-4 text-right font-medium">Days After Sale</th>
-                <th className="py-2 pr-4 text-right font-medium">Refund Amount</th>
-                <th className="py-2 text-right font-medium">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {flattened.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
-                    No returns recorded yet.
-                  </td>
-                </tr>
-              )}
-              {flattened.map((item) => (
-                <tr key={`${item.orderId}-${item.return.id}`} className="hover:bg-muted/50">
-                  <td className="py-3 pr-4">
-                    <Link to={`/orders/${item.orderId}`} className="font-medium hover:underline">
-                      {item.orderNumber}
-                    </Link>
-                  </td>
-                  <td className="py-3 pr-4 text-muted-foreground">{formatDate(item.orderedAt)}</td>
-                  <td className="py-3 pr-4">
-                    <p>{item.return.reason}</p>
-                    {item.return.note && <p className="text-xs italic text-muted-foreground">"{item.return.note}"</p>}
-                  </td>
-                  <td className="py-3 pr-4 text-muted-foreground">{formatDate(item.return.requestedAt)}</td>
-                  <td className="py-3 pr-4 text-right">
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      item.daysAfterSale > 30 ? 'bg-red-100 text-red-700' : 'bg-muted text-muted-foreground'
-                    }`}>
-                      {item.daysAfterSale} days
-                    </span>
-                  </td>
-                  <td className="py-3 pr-4 text-right font-medium">{formatCurrency(item.return.refundAmount)}</td>
-                  <td className="py-3 text-right">
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ${returnStatusStyles[item.return.status as keyof typeof returnStatusStyles]}`}>
-                      {item.return.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
-
-      <ReturnFormDialog open={dialogOpen} onClose={() => setDialogOpen(false)} orders={orders ?? []} />
+      {receivingReturn && (
+        <ReturnReceivingDialog
+          open={!!receivingReturn}
+          onClose={() => setReceivingReturn(null)}
+          returnRecord={receivingReturn.ret}
+          orderNumber={receivingReturn.orderNumber}
+        />
+      )}
     </div>
   );
 }

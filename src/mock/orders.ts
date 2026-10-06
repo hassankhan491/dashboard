@@ -190,7 +190,22 @@ export const mockOrders: Order[] = [
     shippingFee: 6.5,
     marketplaceFee: 7.08,
     total: 65.5,
-    returns: [],
+    // STEP 4: Added pre-shipment refund demo (ret-4)
+    returns: [
+      {
+        id: "ret-4",
+        reason: "Customer cancelled before shipment",
+        status: "refunded",
+        refundAmount: 59.0,
+        requestedAt: "2026-10-02T10:00:00.000Z",
+        expectedQty: 0,
+        receipts: [],
+        statusHistory: [
+          { id: "rse-20", status: "requested", changedBy: "System", changedAt: "2026-10-02T10:00:00.000Z" },
+          { id: "rse-21", status: "refunded", changedBy: "Ayesha Khan", changedAt: "2026-10-02T14:00:00.000Z" },
+        ],
+      },
+    ],
     statusHistory: [
       {
         id: "ev-10",
