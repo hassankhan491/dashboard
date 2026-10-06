@@ -6,8 +6,7 @@ import {
   type ColumnDef,
   type RowSelectionState,
 } from "@tanstack/react-table";
-import { AlertTriangle, PackageCheck, ShieldAlert } from "lucide-react";
-import { useMemo, useState } from "react";
+import { AlertTriangle, PackageCheck, PackageX, ShieldAlert, Truck } from "lucide-react";import { useMemo, useState } from "react";
 import { Card } from "../components/ui/Card";
 import { useAuth } from "../hooks/AuthContext";
 import { useOrders, useUpdateReturnStatus } from "../hooks/useOrders";
@@ -37,6 +36,7 @@ interface FlatReturn extends ReturnRecord {
   orderNumber: string;
   customerName: string;
   isOverdue: boolean;
+  isShipped: boolean;
 }
 
 export function ReturnsPage() {
@@ -69,6 +69,10 @@ export function ReturnsPage() {
           (ret.status === "approved" || ret.status === "in_transit") &&
           receivedQty < (ret.expectedQty ?? 1) &&
           now - approvedAt > fourteenDays;
+                  const isShipped =
+          Boolean(order.shipment) ||
+          order.status === "shipped" ||
+          order.status === "delivered";
 
         return {
           ...ret,
@@ -76,6 +80,7 @@ export function ReturnsPage() {
           orderNumber: order.orderNumber,
           customerName: order.customerName,
           isOverdue,
+          isShipped,
         };
       }),
     );
@@ -144,6 +149,20 @@ export function ReturnsPage() {
             )}
           </div>
         ),
+      },
+            {
+        id: "shipment",
+        header: "Shipment",
+        cell: ({ row }) =>
+          row.original.isShipped ? (
+            <span className="flex items-center gap-1 text-xs font-medium text-green-700">
+              <Truck size={12} /> Shipped
+            </span>
+          ) : (
+            <span className="flex items-center gap-1 text-xs font-medium text-amber-700">
+              <PackageX size={12} /> Not Shipped
+            </span>
+          ),
       },
       {
         id: "qty",
