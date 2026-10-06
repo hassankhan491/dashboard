@@ -36,6 +36,10 @@ export interface ReturnRecord {
   requestedAt: string;
   note?: string;
   statusHistory: ReturnStatusEvent[];
+  expectedQty?: number;          // Units expected back (defaults to 1)
+  returnAddressId?: string;      // Master address where the return should arrive
+  receipts?: ReturnReceipt[];    // Physical receiving events (partial supported)
+  
 }
 
 export interface OrderStatusEvent {
@@ -65,4 +69,30 @@ export interface Order {
   statusHistory: OrderStatusEvent[];
   /** Exception/issue description, if any */
   exception?: string;
+}
+
+// ---------- Phase 13: Return Receiving (ORD-07, 5.2) ----------
+
+/** Physical condition of a returned unit checked by warehouse staff */
+export type ReturnCondition = 'sellable' | 'damaged' | 'used' | 'missing_parts' | 'other';
+
+/** One physical receiving event against a return (supports partial receiving) */
+export interface ReturnReceipt {
+  id: string;
+  receivedQty: number;
+  receivedAt: string;
+  condition: ReturnCondition;
+  conditionNote?: string;
+  returnAddressId: string;
+  receivedBy: string;
+}
+
+/** Master return destination from Settings (never free-typed) */
+export interface ReturnAddress {
+  id: string;
+  label: string;
+  addressLine: string;
+  city: string;
+  country: string;
+  isDefault: boolean;
 }

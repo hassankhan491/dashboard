@@ -32,7 +32,23 @@ export const mockOrders: Order[] = [
       shippedAt: "2026-09-09T08:00:00.000Z",
       deliveredAt: "2026-09-12T14:30:00.000Z",
     },
-    returns: [],
+    // EDIT C: Added ret-3 (overdue return demo)
+    returns: [
+      {
+        id: "ret-3",
+        reason: "Customer ordered wrong size",
+        status: "approved",
+        refundAmount: 24.99,
+        requestedAt: "2026-09-20T08:00:00.000Z",
+        expectedQty: 1,
+        returnAddressId: "ra-1",
+        receipts: [],
+        statusHistory: [
+          { id: "rse-10", status: "requested", changedBy: "Sara Ali", changedAt: "2026-09-20T08:00:00.000Z" },
+          { id: "rse-11", status: "approved", changedBy: "Ayesha Khan", changedAt: "2026-09-20T12:00:00.000Z" },
+        ],
+      },
+    ],
     statusHistory: [
       {
         id: "ev-1",
@@ -216,15 +232,27 @@ export const mockOrders: Order[] = [
       shippedAt: "2026-09-16T09:00:00.000Z",
       deliveredAt: "2026-09-19T12:00:00.000Z",
     },
+    // EDIT A: Added expectedQty, returnAddressId, and receipts to ret-1
     returns: [
       {
         id: "ret-1",
-        //  variantId: "v-5",
-        // quantity: 1,
         reason: "Damaged on arrival",
         status: "refunded",
         refundAmount: 29.99,
         requestedAt: "2026-09-18T10:00:00.000Z",
+        expectedQty: 1,
+        returnAddressId: "ra-1",
+        receipts: [
+          {
+            id: "rcpt-1",
+            receivedQty: 1,
+            receivedAt: "2026-09-24T11:30:00.000Z",
+            condition: "damaged",
+            conditionNote: "Cracked housing, unsellable",
+            returnAddressId: "ra-1",
+            receivedBy: "Danish Malik",
+          },
+        ],
         statusHistory: [
           {
             id: "rse-1",
@@ -409,16 +437,17 @@ export const mockOrders: Order[] = [
     shippingFee: 5.99,
     marketplaceFee: 6.75,
     total: 50.99,
+    // EDIT B: Added expectedQty and empty receipts array to ret-2
     returns: [
       {
         id: "ret-2",
-         // REMOVED orderId
-        // quantity: 1,
         reason: "Wrong item shipped",
         status: "requested",
         refundAmount: 45.0,
         requestedAt: "2026-10-01T09:30:00.000Z",
         note: "Customer received wrong color",
+        expectedQty: 1,
+        receipts: [],
         statusHistory: [
           {
             id: "rse-4",
