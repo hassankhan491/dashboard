@@ -89,7 +89,7 @@ export function POFormDialog({ open, onClose }: Props) {
   const onSubmit = async (values: POFormValues) => {
     const input: PurchaseOrderInput = {
       supplierId: values.supplierId,
-      expectedDate: values.expectedDate,
+      expectedDelivery: values.expectedDate,     // ✅ correct variable name
       notes: values.notes || undefined,
       items: values.items,
     };

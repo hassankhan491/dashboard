@@ -9,9 +9,17 @@ import { Card } from '../components/ui/Card';
 import { useAuth } from '../hooks/AuthContext';
 import { usePurchaseOrders, useSuppliers } from '../hooks/usePurchasing';
 import { formatCurrency, formatDate } from '../utils/format';
-import { poStatusStyles } from '../utils/poStatus';
-import type { PurchaseOrder } from '../types/purchasing';
+import type { POStatus, PurchaseOrder } from '../types/purchasing';
 import { POFormDialog } from '../features/purchasing/POFormDialog';
+
+const statusStyles: Record<POStatus, string> = {
+  draft: 'bg-gray-100 text-gray-700',
+  ordered: 'bg-blue-100 text-blue-700',
+  partially_received: 'bg-amber-100 text-amber-700',
+  received: 'bg-green-100 text-green-700',
+  closed: 'bg-purple-100 text-purple-700',
+  cancelled: 'bg-red-100 text-red-700',
+};
 
 export function PurchasingPage() {
   const { can } = useAuth();
@@ -20,12 +28,12 @@ export function PurchasingPage() {
 
   const [sorting, setSorting] = useState<SortingState>([]);
   const [search, setSearch] = useState('');
-  const [dialogOpen, setDialogOpen] = useState(false); // For Step 3
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const columns = useMemo<ColumnDef<PurchaseOrder>[]>(
     () => [
       {
-        accessorKey: 'id',
+        id: 'poNumber',
         header: ({ column }) => (
           <button
             className="flex items-center gap-1"
@@ -36,7 +44,7 @@ export function PurchasingPage() {
         ),
         cell: ({ row }) => (
           <Link to={`/purchasing/${row.original.id}`} className="font-medium hover:underline">
-            {row.original.id.toUpperCase()}
+            {row.original.poNumber}
           </Link>
         ),
       },
@@ -49,8 +57,8 @@ export function PurchasingPage() {
         accessorKey: 'status',
         header: 'Status',
         cell: ({ row }) => (
-          <span className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ${poStatusStyles[row.original.status]}`}>
-            {row.original.status}
+          <span className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ${statusStyles[row.original.status]}`}>
+            {row.original.status.replace('_', ' ')}
           </span>
         ),
       },
@@ -59,21 +67,26 @@ export function PurchasingPage() {
         header: () => <span className="block text-right">Items</span>,
         cell: ({ row }) => (
           <span className="block text-right">
-            {row.original.items.reduce((sum, item) => sum + item.quantity, 0)} units
+            {row.original.items.reduce((sum, item) => sum + item.orderedQty, 0)} units
           </span>
         ),
       },
       {
-        accessorKey: 'totalCost',
+        id: 'totalCost',
         header: () => <span className="block text-right">Total Cost</span>,
-        cell: ({ row }) => (
-          <span className="block text-right font-medium">{formatCurrency(row.original.totalCost)}</span>
-        ),
+        cell: ({ row }) => {
+          const po = row.original;
+          const subtotal = po.items.reduce((sum, i) => sum + i.orderedQty * i.unitCost, 0);
+          const total = subtotal + po.shippingCost + po.taxDuty + po.otherCharges;
+          return (
+            <span className="block text-right font-medium">{formatCurrency(total)}</span>
+          );
+        },
       },
       {
-        accessorKey: 'expectedDate',
+        id: 'expectedDelivery',
         header: 'Expected Date',
-        cell: ({ row }) => formatDate(row.original.expectedDate),
+        cell: ({ row }) => formatDate(row.original.expectedDelivery),
       },
     ],
     [suppliers],
@@ -108,7 +121,7 @@ export function PurchasingPage() {
         <div>
           <h1 className="text-2xl font-bold">Purchasing</h1>
           <p className="text-sm text-muted-foreground">
-            Manage supplier purchase orders and restocking.
+            Manage supplier purchase orders, invoices, and restocking.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">

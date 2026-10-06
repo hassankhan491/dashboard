@@ -54,7 +54,7 @@ export const inventoryService = {
 
       const oldCost = record.averageCost;
       const currentQty = record.quantity;
-      const newQty = item.quantity;
+      const newQty = item.orderedQty;
       const newUnitCost = item.unitCost;
 
       // Calculate Weighted Average Cost (WAC)
