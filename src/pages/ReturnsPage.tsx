@@ -4,6 +4,7 @@ import {
   getFilteredRowModel,
   useReactTable,
   type ColumnDef,
+  type RowSelectionState,
 } from "@tanstack/react-table";
 import { AlertTriangle, PackageCheck, ShieldAlert } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -43,6 +44,7 @@ export function ReturnsPage() {
   const { data: orders } = useOrders();
   const updateReturnStatus = useUpdateReturnStatus();
   const [search, setSearch] = useState("");
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [receivingReturn, setReceivingReturn] = useState<{
     ret: ReturnRecord;
     orderNumber: string;
@@ -64,8 +66,8 @@ export function ReturnsPage() {
         const receivedQty =
           ret.receipts?.reduce((sum, r) => sum + r.receivedQty, 0) ?? 0;
         const isOverdue =
-          ret.status === "approved" &&
-          receivedQty === 0 &&
+          (ret.status === "approved" || ret.status === "in_transit") &&
+          receivedQty < (ret.expectedQty ?? 1) &&
           now - approvedAt > fourteenDays;
 
         return {
@@ -81,6 +83,28 @@ export function ReturnsPage() {
 
   const columns = useMemo<ColumnDef<FlatReturn>[]>(
     () => [
+      // ORD-10: Bulk Selection Checkbox Column
+      {
+        id: "select",
+        header: ({ table }) => (
+          <input
+            type="checkbox"
+            checked={table.getIsAllPageRowsSelected()}
+            onChange={table.getToggleAllPageRowsSelectedHandler()}
+            className="h-4 w-4 rounded border-gray-300"
+          />
+        ),
+        cell: ({ row }) => (
+          <input
+            type="checkbox"
+            checked={row.getIsSelected()}
+            disabled={!row.getCanSelect()}
+            onChange={row.getToggleSelectedHandler()}
+            className="h-4 w-4 rounded border-gray-300"
+          />
+        ),
+        enableColumnFilter: false,
+      },
       {
         id: "order",
         header: "Order",
@@ -161,7 +185,7 @@ export function ReturnsPage() {
                 <button
                   onClick={() =>
                     updateReturnStatus.mutate({
-                         id: ret.orderId,
+                      id: ret.orderId,
                       returnId: ret.id,
                       status: "approved",
                     })
@@ -173,7 +197,7 @@ export function ReturnsPage() {
                 <button
                   onClick={() =>
                     updateReturnStatus.mutate({
-                         id: ret.orderId,
+                      id: ret.orderId,
                       returnId: ret.id,
                       status: "rejected",
                     })
@@ -212,7 +236,7 @@ export function ReturnsPage() {
               <button
                 onClick={() =>
                   updateReturnStatus.mutate({
-                       id: ret.orderId,
+                    id: ret.orderId,
                     returnId: ret.id,
                     status: "closed",
                   })
@@ -234,11 +258,27 @@ export function ReturnsPage() {
   const table = useReactTable({
     data: flatReturns,
     columns,
-    state: { globalFilter: search },
+    state: { globalFilter: search, rowSelection },
     onGlobalFilterChange: setSearch,
+    onRowSelectionChange: setRowSelection,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    // ORD-10: Only allow selecting returns that are in the "requested" state
+    enableRowSelection: (row) => row.original.status === "requested", 
   });
+
+  const selectedCount = Object.keys(rowSelection).length;
+
+  const handleBulkAction = (status: "approved" | "rejected") => {
+    const selectedIndices = Object.keys(rowSelection).map(Number);
+    selectedIndices.forEach((idx) => {
+      const ret = flatReturns[idx];
+      if (ret) {
+        updateReturnStatus.mutate({ id: ret.orderId, returnId: ret.id, status });
+      }
+    });
+    setRowSelection({}); // Clear selection after action
+  };
 
   if (!can("orders", "view")) {
     return (
@@ -250,7 +290,7 @@ export function ReturnsPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-20"> {/* Added pb-20 for floating bar spacing */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">Returns & Receiving</h1>
@@ -316,6 +356,31 @@ export function ReturnsPage() {
           </table>
         </div>
       </div>
+
+      {/* ORD-10: Bulk Actions Floating Bar */}
+      {selectedCount > 0 && (
+        <div className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-lg border bg-card px-4 py-3 shadow-xl">
+          <span className="text-sm font-medium">{selectedCount} selected</span>
+          <button 
+            onClick={() => handleBulkAction("approved")} 
+            className="rounded-md bg-green-600 px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90"
+          >
+            Bulk Approve
+          </button>
+          <button 
+            onClick={() => handleBulkAction("rejected")} 
+            className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90"
+          >
+            Bulk Reject
+          </button>
+          <button 
+            onClick={() => setRowSelection({})} 
+            className="text-xs text-muted-foreground hover:underline"
+          >
+            Clear
+          </button>
+        </div>
+      )}
 
       {receivingReturn && (
         <ReturnReceivingDialog

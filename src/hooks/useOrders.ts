@@ -96,3 +96,10 @@ export function useRefundExposure() {
     queryFn: () => ordersService.getRefundExposure(),
   });
 }
+
+export function useExceptionCounts() {
+  return useQuery({
+    queryKey: ['orders', 'exception-counts'],
+    queryFn: () => ordersService.getExceptionCounts(),
+  });
+}

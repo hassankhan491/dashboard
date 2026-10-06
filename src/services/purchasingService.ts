@@ -295,6 +295,18 @@ export const purchasingService = {
     };
   },
 
-
+  async getExceptionCounts(): Promise<{ openStockExceptions: number; unpaidInvoices: number }> {
+    await delay(100);
+    const openStockExceptions = exceptionDb.filter((e) => e.status === 'open').length;
+    let unpaidInvoices = 0;
+    for (const po of poDb) {
+      const poInvoices = invoiceDb.filter((i) => i.poId === po.id);
+      const poPayments = paymentDb.filter((p) => p.poId === po.id);
+      const invTotal = poInvoices.reduce((s, i) => s + i.amount, 0);
+      const payTotal = poPayments.reduce((s, p) => s + p.paidAmount, 0);
+      if (invTotal > 0 && payTotal < invTotal) unpaidInvoices++;
+    }
+    return { openStockExceptions, unpaidInvoices };
+  },
     
 };

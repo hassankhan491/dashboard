@@ -161,3 +161,10 @@ export function useReceivePOItems() {
     },
   });
 }
+
+export function usePurchasingExceptions() {
+  return useQuery({
+    queryKey: ['purchasing', 'exception-counts'],
+    queryFn: () => purchasingService.getExceptionCounts(),
+  });
+}

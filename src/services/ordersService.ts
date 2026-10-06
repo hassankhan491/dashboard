@@ -224,4 +224,30 @@ export const ordersService = {
       refundedNotShippedCount: notShippedCount,
     };
   },
+
+
+
+
+
+
+
+
+    async getExceptionCounts(): Promise<{ overdueReturns: number }> {
+    await delay(100);
+    const now = new Date().getTime();
+    const fourteenDays = 14 * 24 * 60 * 60 * 1000;
+    let overdueReturns = 0;
+    for (const order of db) {
+      for (const ret of order.returns) {
+        if (ret.status === 'approved' || ret.status === 'in_transit') {
+          const approvedEvent = ret.statusHistory.find((h) => h.status === 'approved');
+          if (approvedEvent && now - new Date(approvedEvent.changedAt).getTime() > fourteenDays) {
+            const received = ret.receipts?.reduce((s, r) => s + r.receivedQty, 0) ?? 0;
+            if (received < (ret.expectedQty ?? 1)) overdueReturns++;
+          }
+        }
+      }
+    }
+    return { overdueReturns };
+  },
 };

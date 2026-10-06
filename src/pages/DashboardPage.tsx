@@ -4,6 +4,7 @@ import { StatCard } from '../components/ui/StatCard';
 import { useMarketplaceFilter } from '../hooks/MarketplaceFilterContext';
 import { useDashboardAlerts, useDashboardKpis } from '../hooks/useDashboard';
 import { MARKETPLACE_FILTER_ALL } from '../types/marketplace';
+import { ExceptionQueueWidget } from '../features/dashboard/ExceptionQueueWidget';
 
 export function DashboardPage() {
   const { filter } = useMarketplaceFilter();
@@ -52,6 +53,9 @@ export function DashboardPage() {
           iconColor="text-orange-600" 
         />
       </div>
+
+      {/* EXCEPTION QUEUE WIDGET (ORD-09 / PUR-07) */}
+      <ExceptionQueueWidget />
 
       {/* Alerts & Table Grid */}
       <div className="grid gap-6 lg:grid-cols-3">
