@@ -103,3 +103,38 @@ export function useExceptionCounts() {
     queryFn: () => ordersService.getExceptionCounts(),
   });
 }
+
+
+export function useAddReturnAddress() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { label: string; addressLine: string; city: string; country: string; isDefault?: boolean }) =>
+      ordersService.addReturnAddress(input),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ['return-addresses'] }),
+  });
+}
+
+export function useUpdateReturnAddress() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, input }: { id: string; input: { label: string; addressLine: string; city: string; country: string; isDefault?: boolean } }) =>
+      ordersService.updateReturnAddress(id, input),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ['return-addresses'] }),
+  });
+}
+
+export function useSetDefaultReturnAddress() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => ordersService.setDefaultReturnAddress(id),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ['return-addresses'] }),
+  });
+}
+
+export function useDeleteReturnAddress() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => ordersService.deleteReturnAddress(id),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ['return-addresses'] }),
+  });
+}

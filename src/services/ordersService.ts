@@ -18,7 +18,7 @@ export interface ReturnInput {
 
 /** In-memory "database" — later replaced by REST calls */
 let db: Order[] = mockOrders.map((order) => ({ ...order }));
-
+let returnAddressesDb: ReturnAddress[] = mockReturnAddresses.map((a) => ({ ...a }));
 export const ordersService = {
   async getAll(): Promise<Order[]> {
     await delay(250);
@@ -79,10 +79,53 @@ export const ordersService = {
     return { ...updated };
   },
 
-  /** 5.2: Master return destinations from settings */
   async getReturnAddresses(): Promise<ReturnAddress[]> {
     await delay(100);
-    return mockReturnAddresses.map((a) => ({ ...a }));
+    return returnAddressesDb.map((a) => ({ ...a }));
+  },
+
+  /** 5.2: master data CRUD — exactly one default address at all times */
+  async addReturnAddress(input: { label: string; addressLine: string; city: string; country: string; isDefault?: boolean }): Promise<ReturnAddress> {
+    await delay(200);
+    const isFirst = returnAddressesDb.length === 0;
+    const addr: ReturnAddress = { ...input, id: `ra-${Date.now()}`, isDefault: isFirst || Boolean(input.isDefault) };
+    returnAddressesDb = returnAddressesDb.map((a) => (addr.isDefault ? { ...a, isDefault: false } : a));
+    returnAddressesDb = [...returnAddressesDb, addr];
+    return { ...addr };
+  },
+
+  async updateReturnAddress(id: string, input: { label: string; addressLine: string; city: string; country: string; isDefault?: boolean }): Promise<ReturnAddress> {
+    await delay(200);
+    const existing = returnAddressesDb.find((a) => a.id === id);
+    if (!existing) throw new Error('Return address not found');
+    const updated: ReturnAddress = { ...existing, ...input, isDefault: Boolean(input.isDefault) };
+    returnAddressesDb = returnAddressesDb.map((a) =>
+      a.id === id ? updated : updated.isDefault ? { ...a, isDefault: false } : a,
+    );
+    return { ...updated };
+  },
+
+  async setDefaultReturnAddress(id: string): Promise<void> {
+    await delay(150);
+    if (!returnAddressesDb.some((a) => a.id === id)) throw new Error('Return address not found');
+    returnAddressesDb = returnAddressesDb.map((a) => ({ ...a, isDefault: a.id === id }));
+  },
+
+  /** Master-data protection: cannot delete an address referenced by return records */
+  async deleteReturnAddress(id: string): Promise<void> {
+    await delay(200);
+    const inUse = db.some((o) =>
+      o.returns.some((r) => r.returnAddressId === id || (r.receipts ?? []).some((rc) => rc.returnAddressId === id)),
+    );
+    if (inUse) {
+      throw new Error('This address is referenced by return records and cannot be deleted. Keep it for history or reassign new returns first.');
+    }
+    const deletedWasDefault = returnAddressesDb.find((a) => a.id === id)?.isDefault;
+    let remaining = returnAddressesDb.filter((a) => a.id !== id);
+    if (deletedWasDefault && remaining.length > 0) {
+      remaining = remaining.map((a, i) => ({ ...a, isDefault: i === 0 }));
+    }
+    returnAddressesDb = remaining;
   },
 
   async addReturn(id: string, input: ReturnInput): Promise<Order> {

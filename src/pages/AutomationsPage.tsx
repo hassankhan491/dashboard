@@ -50,6 +50,7 @@ export function AutomationsPage() {
       <div className="grid gap-4 md:grid-cols-3">
         {jobs.map((job) => {
           const lastRun = runs?.find((r) => r.jobName === job.name);
+                    const isRunningThis = runJob.isPending && runJob.variables === job.name;
           return (
             <Card key={job.name}>
               <p className="font-semibold">{job.label}</p>
@@ -64,7 +65,7 @@ export function AutomationsPage() {
                   disabled={runJob.isPending}
                   className="mt-3 flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50"
                 >
-                  <Play size={12} /> {runJob.isPending ? 'Running…' : 'Run Now'}
+                     <Play size={12} /> {isRunningThis ? 'Running…' : 'Run Now'}
                 </button>
               )}
             </Card>
