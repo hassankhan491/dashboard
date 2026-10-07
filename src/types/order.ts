@@ -96,3 +96,32 @@ export interface ReturnAddress {
   country: string;
   isDefault: boolean;
 }
+
+
+// ---------- Phase 14: Order Cost Rollup (AUT-06 / 6.1) ----------
+
+export interface OrderLineCost {
+  orderItemId: string;
+  sku: string;
+  quantity: number;
+  unitCogs: number | null;      // null = missing cost (AUT-08)
+  cogsSource: 'master' | 'missing';
+  lineCogs: number;
+}
+
+/** 6.1: Total Order Cost = COGS + Shipping + Referral Fees + Adjustments + Other */
+export interface OrderCostBreakdown {
+  orderId: string;
+  lines: OrderLineCost[];
+  productCogs: number;
+  shippingCost: number;
+  shippingSource: 'actual' | 'estimated';
+  referralFee: number;
+  referralSource: 'imported' | 'calculated';
+  adjustments: number;
+  otherCosts: number;
+  totalCost: number;
+  revenue: number;
+  trueProfit: number;
+  missingCosts: boolean;
+}

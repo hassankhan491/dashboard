@@ -70,3 +70,19 @@ export interface ListingInput {
   listingPrice: number;
   status: MarketplaceListing['status'];
 }
+
+// ---------- Phase 14: SKU COGS Master (AUT-04 / 6.2) ----------
+
+/** A cost rule for one SKU, valid between effective dates */
+export interface SKUCost {
+  id: string;
+  sku: string;
+  unitCost: number;
+  currency: string;
+  effectiveFrom: string;   // ISO date the cost starts applying
+  effectiveTo?: string;    // ISO date it stops (undefined = currently active)
+  source: 'manual' | 'import' | 'purchasing';
+  note?: string;
+  createdBy: string;
+  createdAt: string;
+}
