@@ -10,6 +10,7 @@ import { useOrder, useUpdateOrderStatus } from '../hooks/useOrders';
 import type { OrderStatus } from '../types/order';
 import { formatCurrency, formatDate } from '../utils/format';
 import { nextStatuses, orderStatusStyles } from '../utils/orderStatus';
+import { OrderCostBreakdown } from '../features/orders/OrderCostBreakdown';
 
 export function OrderDetailPage() {
   const { orderId } = useParams<{ orderId: string }>();
@@ -96,7 +97,7 @@ export function OrderDetailPage() {
       )}
 
       <div className="grid gap-4 lg:grid-cols-3">
-        {/* Left column: items + status history */}
+        {/* Left column: items + returns + status history + cost breakdown */}
         <div className="space-y-4 lg:col-span-2">
           <Card>
             <h2 className="mb-4 flex items-center gap-2 font-semibold">
@@ -130,7 +131,8 @@ export function OrderDetailPage() {
             </div>
           </Card>
 
-                  <OrderReturnsCard order={order} />
+          <OrderReturnsCard order={order} />
+
           <Card>
             <h2 className="mb-4 font-semibold">Status history</h2>
             <ol className="space-y-4">
@@ -168,6 +170,9 @@ export function OrderDetailPage() {
               ))}
             </ol>
           </Card>
+
+          {/* AUT-06: Order Cost Rollup — components stored & shown separately */}
+          <OrderCostBreakdown orderId={order.id} />
         </div>
 
         {/* Right column: summary, customer, shipment, status update */}

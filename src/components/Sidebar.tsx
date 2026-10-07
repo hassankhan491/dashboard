@@ -1,6 +1,6 @@
 import {
   BarChart3, LayoutDashboard, Package, PackageMinus, Settings, ShieldCheck, ShoppingCart,
-  Truck, UserCog, Users, Wallet, Warehouse, X, type LucideIcon,
+  Truck, UserCog, Users, Wallet, Warehouse, X, type LucideIcon, Coins, Bot,
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../hooks/AuthContext';
@@ -24,11 +24,13 @@ const navItems: NavItem[] = [
   { to: '/purchasing', label: 'Purchasing', icon: Truck, module: 'purchasing' },
   { to: '/inventory', label: 'Inventory', icon: Warehouse, module: 'inventory' },
   { to: '/finance', label: 'Finance', icon: Wallet, module: 'finance' },
+  { to: '/automations', label: 'Automations', icon: Bot, module: 'settings' },
   { to: '/reports', label: 'Reports', icon: BarChart3, module: 'reports' },
   { to: '/users', label: 'Users', icon: UserCog, module: 'users' },
   { to: '/settings', label: 'Settings', icon: Settings, module: 'settings' },
   { to: '/roles', label: 'Roles & Permissions', icon: ShieldCheck, module: 'users' },
   { to: '/audit', label: 'Audit Logs', icon: ShieldCheck, module: 'settings' },
+  { to: '/costs', label: 'COGS Master', icon: Coins, module: 'products' },
 ];
 
 interface Props {

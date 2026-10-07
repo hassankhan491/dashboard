@@ -2,6 +2,7 @@ import { mockSkuCosts } from '../mock/skuCosts';
 import { ordersService } from './ordersService';
 import type { SKUCost } from '../types/product';
 import type { OrderCostBreakdown, OrderLineCost } from '../types/order';
+import { automationsService } from './automationsService';
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -79,7 +80,8 @@ export const costingService = {
     const units = order.items.reduce((s, i) => s + i.quantity, 0);
     const shippingCost = estimateShipping(units);
     const referralFee = order.marketplaceFee;
-    const adjustments = 0; // Phase 14 Step 4
+        const orderAdjustments = await automationsService.getAdjustmentsByOrder(orderId);
+    const adjustments = Number(orderAdjustments.reduce((s, a) => s + a.amount, 0).toFixed(2)); // Phase 14 Step 4
     const otherCosts = 0;
     const totalCost = Number((productCogs + shippingCost + referralFee + adjustments + otherCosts).toFixed(2));
     const revenue = order.subtotal;
